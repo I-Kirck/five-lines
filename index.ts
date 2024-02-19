@@ -14,7 +14,8 @@ enum RawTile {
   KEY2, LOCK2
 }
 
-interface Tile2{
+interface Tile{
+  color(g: CanvasRenderingContext2D): void;
   isFlux(): boolean;
   isUnbreakable(): boolean;
   isStone(): boolean;
@@ -89,7 +90,7 @@ class Down implements Input{
 let playerx = 1;
 let playery = 1;
 
-let map: Tile[][] = [
+let rawMap: RawTile[][] = [
   [2, 2, 2, 2, 2, 2, 2, 2],
   [2, 3, 0, 1, 1, 2, 0, 2],
   [2, 4, 2, 6, 1, 2, 0, 2],
@@ -99,6 +100,44 @@ let map: Tile[][] = [
 ];
 
 let inputs: Input[] = [];
+
+let map: Tile[][];
+function assertExhausted(x: never): never {
+  throw new Error("Unexpected object" + x);
+}
+
+function transformTile(tile: RawTile){
+  switch (tile){
+    case RawTile.AIR: return new Air();
+    case RawTile.BOX: return new Box();
+    case RawTile.FALLING_BOX: return new FallingBox();
+    case RawTile.UNBREAKABLE: return new Unbreakable();
+    case RawTile.FLUX: return new Flux();
+    case RawTile.FALLING_STONE: return new FallingStone();
+    case RawTile.KEY1: return new Key1();
+    case RawTile.KEY2: return new Key2();
+    case RawTile.PLAYER: return new Player();
+    case RawTile.LOCK1: return new Lock1();
+    case RawTile.LOCK2: return new Lock2();
+    case RawTile.STONE: return new Stone();
+    default: assertExhausted(tile);
+  }
+}
+
+function transformMap(){
+  map = new Array(rawMap.length);
+  for(let y = 0; y < rawMap.length; y++){
+    map[y] = new Array (rawMap[y].length);
+    for(let x = 0; x < rawMap[y].length; x++){
+      map[y][x] = transformTile(rawMap[y][x]);
+    }
+  }
+}
+
+window.onload = () => {
+  transformMap();
+  gameLoop();
+}
 
 function removeLock1() {
   for (let y = 0; y < map.length; y++) {
@@ -217,21 +256,13 @@ function drawMap(g: CanvasRenderingContext2D){
 }
 
 function colorOfTile(g: CanvasRenderingContext2D, x: number, y: number){
-  if (map[y][x].isFlux())
-    g.fillStyle = "#ccffcc";
-  else if (map[y][x].isUnbreakable())
-    g.fillStyle = "#999999";
-  else if (map[y][x].isStone() || map[y][x].isFallingStone())
-    g.fillStyle = "#0000cc";
-  else if (map[y][x].isBox()|| map[y][x].isFallingBox())
-    g.fillStyle = "#8b4513";
-  else if (map[y][x].isKey1() || map[y][x].isLock1())
-    g.fillStyle = "#ffcc00";
-  else if (map[y][x].isKey2() || map[y][x].isLock2())
-    g.fillStyle = "#00ccff";
+map[y][x].color(g);
 }
 
-class Flux implements Tile2{
+class Flux implements Tile{
+  color(g: CanvasRenderingContext2D): void {
+      g.fillStyle = "#ccffcc";
+  }
   isFallingStone(): boolean {return false}
   isLock1(): boolean {return false}
   isLock2(): boolean {return false}
@@ -245,7 +276,8 @@ class Flux implements Tile2{
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
 }
-class Air implements Tile2{
+class Air implements Tile{
+  color(g: CanvasRenderingContext2D){}
   isFallingStone(): boolean {return false}
   isLock1(): boolean {return false}
   isLock2(): boolean {return false}
@@ -260,7 +292,10 @@ class Air implements Tile2{
   isPlayer(): boolean {return false}
 }
 
-class FallingStone implements Tile2{
+class FallingStone implements Tile{
+  color(g: CanvasRenderingContext2D){
+      g.fillStyle = "#0000cc";
+  }
   isFallingStone(): boolean {return true}
   isLock1(): boolean {return false}
   isLock2(): boolean {return false}
@@ -274,7 +309,8 @@ class FallingStone implements Tile2{
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
 }
-class Lock1 implements Tile2{
+class Lock1 implements Tile{
+  color(g: CanvasRenderingContext2D){}
   isFallingStone(): boolean {return false}
   isLock1(): boolean {return true}
   isLock2(): boolean {return false}
@@ -288,7 +324,8 @@ class Lock1 implements Tile2{
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
 }
-class Lock2 implements Tile2{
+class Lock2 implements Tile{
+  color(g: CanvasRenderingContext2D){}
   isFallingStone(): boolean {return false}
   isLock1(): boolean {return false}
   isLock2(): boolean {return true}
@@ -302,7 +339,10 @@ class Lock2 implements Tile2{
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
 }
-class Box implements Tile2{
+class Box implements Tile{
+  color(g: CanvasRenderingContext2D){
+      g.fillStyle = "#8b4513";
+  }
   isFallingStone(): boolean {return false}
   isLock1(): boolean {return false}
   isLock2(): boolean {return false}
@@ -316,7 +356,10 @@ class Box implements Tile2{
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
 }
-class Key1 implements Tile2{
+class Key1 implements Tile{
+  color(g: CanvasRenderingContext2D){
+      g.fillStyle = "#ffcc00";
+  }
   isFallingStone(): boolean {return false}
   isLock1(): boolean {return false}
   isLock2(): boolean {return false}
@@ -330,7 +373,10 @@ class Key1 implements Tile2{
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
 }
-class Key2 implements Tile2{
+class Key2 implements Tile{
+  color(g: CanvasRenderingContext2D){
+      g.fillStyle = "#00ccff";
+  }
   isFallingStone(): boolean {return false}
   isLock1(): boolean {return false}
   isLock2(): boolean {return false}
@@ -344,7 +390,10 @@ class Key2 implements Tile2{
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
 }
-class Stone implements Tile2{
+class Stone implements Tile{
+  color(g: CanvasRenderingContext2D){
+      g.fillStyle = "#0000cc";
+  }
   isFallingStone(): boolean {return false}
   isLock1(): boolean {return false}
   isLock2(): boolean {return false}
@@ -359,7 +408,10 @@ class Stone implements Tile2{
   isPlayer(): boolean {return false}
 }
 
-class Unbreakable implements Tile2{
+class Unbreakable implements Tile{
+  color(g: CanvasRenderingContext2D){
+      g.fillStyle = "#999999";
+  }
   isFallingStone(): boolean {return false}
   isLock1(): boolean {return false}
   isLock2(): boolean {return false}
@@ -373,7 +425,10 @@ class Unbreakable implements Tile2{
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
 }
-class FallingBox implements Tile2{
+class FallingBox implements Tile{
+  color(g: CanvasRenderingContext2D){
+      g.fillStyle = "#8b4513";
+  }
   isFallingStone(): boolean {return false}
   isLock1(): boolean {return false}
   isLock2(): boolean {return false}
@@ -387,7 +442,8 @@ class FallingBox implements Tile2{
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
 }
-class Player implements Tile2{
+class Player implements Tile{
+  color(g: CanvasRenderingContext2D){}
   isFallingStone(): boolean {return false}
   isLock1(): boolean {return false}
   isLock2(): boolean {return false}
