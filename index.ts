@@ -14,6 +14,30 @@ enum RawTile {
   KEY2, LOCK2
 }
 
+interface FallingState {
+  isFalling(): boolean;
+  moveHorizontal(tile: Tile, dx: number): void;
+}
+
+class Falling implements FallingState{
+  isFalling(): boolean {return true}
+  moveHorizontal(tile: Tile, dx: number): void {
+      
+  }
+}
+
+class Resting implements FallingState {
+  isFalling(): boolean {return false}
+  moveHorizontal(tile: Tile, dx: number): void {
+      if (map[playery][playerx + dx].isPushable()
+        && map[playery][playerx + dx + dx].isAir()
+        && !map[playery + 1][playerx + dx].isAir()) {
+      map[playery][playerx + dx + dx] = map[playery][playerx + dx];
+      moveToTile(playerx + dx, playery);
+      }
+    }
+}
+
 function gameLoop() {
   let before = Date.now();
   update();
@@ -345,9 +369,9 @@ class Key2 implements Tile{
   }
 }
 class Stone implements Tile{
-  private falling: boolean;
-  constructor() {
-    this.falling = false
+  private falling: FallingState;
+  constructor(falling: FallingState) {
+    this.falling = falling
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number){
     g.fillStyle = "#0000cc";
@@ -355,7 +379,7 @@ class Stone implements Tile{
   }
   isPushable(): boolean {return true;}
   isEdible(): boolean {return false;}
-  isFallingStone(): boolean {return this.falling}
+  isFallingStone(): boolean {return this.falling.isFalling()}
   isLock1(): boolean {return false}
   isLock2(): boolean {return false}
   isFlux(){return false}
@@ -369,62 +393,7 @@ class Stone implements Tile{
   isPlayer(): boolean {return false}
 
   moveHorizontal(dx: number): void {
-    if (this.isFallingStone() === false){
-      if (map[playery][playerx + dx].isPushable()
-        && map[playery][playerx + dx + dx].isAir()
-        && !map[playery + 1][playerx + dx].isAir()) {
-      map[playery][playerx + dx + dx] = map[playery][playerx + dx];
-      moveToTile(playerx + dx, playery);
-      }
-    } else {
-
-    }
-  }
-
-  isBoxy(): boolean {
-    return false;
-  }
-
-  isStony(): boolean {
-    return true;
-  }
-}
-
-class FallingStone implements Tile{
-  private falling: boolean;
-  constructor() {
-    this.falling = true;
-  }
-  draw(g: CanvasRenderingContext2D, x: number,y: number){
-    g.fillStyle = "#0000cc";
-    g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-  }
-  isEdible(): boolean {return false}
-  isPushable(): boolean {return false}
-  isFallingStone(): boolean {return this.falling}
-  isLock1(): boolean {return false}
-  isLock2(): boolean {return false}
-  isFlux(): boolean {return false}
-  isBox(): boolean {return false}
-  isKey1(): boolean {return false}
-  isKey2(): boolean {return false}
-  isStone(): boolean {return false}
-  isUnbreakable(): boolean {return false}
-  isFallingBox(): boolean {return false}
-  isAir(): boolean {return false}
-  isPlayer(): boolean {return false}
-
-  moveHorizontal(dx: number): void {
-    if(this.isFallingStone() === true){
-
-    } else {
-      if (map[playery][playerx + dx].isPushable()
-        && map[playery][playerx + dx + dx].isAir()
-        && !map[playery + 1][playerx + dx].isAir()) {
-      map[playery][playerx + dx + dx] = map[playery][playerx + dx];
-      moveToTile(playerx + dx, playery);
-      }
-    }
+    this.falling.moveHorizontal(this, dx)
   }
 
   isBoxy(): boolean {
@@ -551,13 +520,13 @@ function transformTile(tile: RawTile){
     case RawTile.FALLING_BOX: return new FallingBox();
     case RawTile.UNBREAKABLE: return new Unbreakable();
     case RawTile.FLUX: return new Flux();
-    case RawTile.FALLING_STONE: return new FallingStone();
+    case RawTile.FALLING_STONE: return new Stone(new Falling());
     case RawTile.KEY1: return new Key1();
     case RawTile.KEY2: return new Key2();
     case RawTile.PLAYER: return new Player();
     case RawTile.LOCK1: return new Lock1();
     case RawTile.LOCK2: return new Lock2();
-    case RawTile.STONE: return new Stone();
+    case RawTile.STONE: return new Stone(new Resting());
     default: assertExhausted(tile);
   }
 }
@@ -643,14 +612,14 @@ function updateMaps(){
 function updateTile(x: number,y: number){
   if ((map[y][x].isStony())
       && map[y + 1][x].isAir()) {
-    map[y + 1][x] = new FallingStone();
+    map[y + 1][x] = new Stone(new Falling());
     map[y][x] = new Air;
   } else if ((map[y][x].isBoxy())
       && map[y + 1][x].isAir()) {
     map[y + 1][x] = new FallingBox();
     map[y][x] = new Air();
   } else if (map[y][x].isFallingStone()) {
-    map[y][x] = new Stone();
+    map[y][x] = new Stone(new Falling());
   } else if (map[y][x].isFallingBox()) {
     map[y][x] = new Box();
   }
