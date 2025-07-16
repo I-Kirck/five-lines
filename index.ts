@@ -61,11 +61,43 @@ class Resting implements FallingState {
 
 function gameLoop() {
   let before = Date.now();
+  update();
   draw();
   let after = Date.now();
   let frameTime = after - before;
   let sleep = SLEEP - frameTime;
   setTimeout(() => gameLoop(), sleep);
+}
+
+function update() {
+  handleInputs();
+  updateMaps();
+}
+
+function handleInputs(){
+  while (inputs.length > 0) {
+    let input = inputs.pop();
+    input.handle();
+  }
+}
+
+function updateMaps(){
+  for (let y = map.length - 1; y >= 0; y--) {
+    for (let x = 0; x < map[y].length; x++) {
+      updateTile(x,y);
+    }
+  }
+}
+function updateTile(x: number,y: number){
+  // if ((map[y][x].canFall()) && map[y + 1][x].isAir()){
+  //   map[y][x].drop();
+  //   map[y + 1][x] = map[y][x]
+  //   map[y][x] = new Air;
+  // }  else if (map[y][x].isFalling()) {
+  //   map[y][x].rest();
+  // }
+
+  map[y][x].update(y, x)
 }
 
 window.onload = () => {
@@ -473,6 +505,7 @@ function transformMap(){
     }
   }
 }
+
 
 window.onload = () => {
   transformMap();
