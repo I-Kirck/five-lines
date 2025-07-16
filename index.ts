@@ -82,6 +82,7 @@ interface Tile{
   moveHorizontal(dx: number):void;
   isStony(): boolean;
   isBoxy(): boolean;
+  isFalling(): boolean;
 
   drop(): void;
   rest(): void;
@@ -161,6 +162,7 @@ class Flux implements Tile{
   isFallingBox(): boolean {return false}
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
+  isFalling(): boolean {return false}
 
   moveHorizontal(dx: number): void {
     moveToTile(playerx + dx, playery);
@@ -205,6 +207,8 @@ class Air implements Tile{
     return false;
   }
 
+  isFalling(): boolean {return false}
+
   drop(): void {}
   rest(): void {}
 }
@@ -237,6 +241,8 @@ class Lock1 implements Tile{
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
 
+  isFalling(): boolean {return false}
+
   moveHorizontal(dx: number): void {
     removeLock1();
     moveToTile(playerx + dx, playery);
@@ -264,6 +270,7 @@ class Lock2 implements Tile{
   isFallingBox(): boolean {return false}
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
+  isFalling(): boolean {return false}
 
   moveHorizontal(dx: number): void {
     removeLock2();
@@ -314,6 +321,7 @@ class Key1 implements Tile{
   isFallingBox(): boolean {return false}
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
+  isFalling(): boolean {return false}
 
   drop(): void {}
   rest(): void {
@@ -339,6 +347,7 @@ class Key2 implements Tile{
   isFallingBox(): boolean {return false}
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
+  isFalling(): boolean {return false}
 
   moveHorizontal(dx: number): void {
   }
@@ -376,6 +385,7 @@ class Stone implements Tile{
   isFallingBox(): boolean {return false}
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
+  isFalling(): boolean {return false}
 
   moveHorizontal(dx: number): void {
     this.falling.moveHorizontal(this, dx)
@@ -414,6 +424,7 @@ class Unbreakable implements Tile{
   isFallingBox(): boolean {return false}
   isAir(): boolean {return false}
   isPlayer(): boolean {return false}
+  isFalling(): boolean {return false}
 
   moveHorizontal(dx: number): void {}
   drop(): void {}
@@ -444,6 +455,8 @@ class Box implements Tile{
   moveHorizontal(dx: number) {
     this.falling.moveHorizontal(this, dx)
   }
+
+  isFalling(): boolean {return false}
 
   isBoxy(): boolean {return true;}
 
@@ -480,6 +493,7 @@ class Player implements Tile{
   isStony(): boolean {
     return false;
   }
+  isFalling(): boolean {return false}
 
   drop(): void{}
   rest(): void{}
@@ -609,7 +623,7 @@ function updateTile(x: number,y: number){
     map[y][x].drop();
     map[y + 1][x] = map[y][x]
     map[y][x] = new Air;
-  }  else if (map[y][x].isFallingStone() || map[y][x].isFallingBox()) {
+  }  else if (map[y][x].isFalling()) {
     map[y][x].rest();
   }
 }
